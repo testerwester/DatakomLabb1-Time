@@ -18,7 +18,7 @@ int errorMessage(char *errorType, int returnValue);
 
 int main()
 {
-    int sockfp = 0, len, n;
+    int clientSocket = 0, len, n;
 
     char emptyBuffer[BUFF_SIZE];
 
@@ -26,16 +26,16 @@ int main()
     time_t *recvBuffer = malloc(sizeof(time_t));
 
 
-    sockfp = socket(AF_INET, SOCK_DGRAM, 0);
+    clientSocket = errorMessage("Socket", socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)); //Creates UDP socket with DGRAM type
 
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_addr.s_addr = INADDR_ANY;
     serverAddress.sin_port = htons(PORT);
 
-    errorMessage("Send", sendto(sockfp, (const char*)emptyBuffer, BUFF_SIZE, MSG_CONFIRM, (const struct sockaddr *) &serverAddress, sizeof(serverAddress)));
+    errorMessage("Send", sendto(clientSocket, (const char*)emptyBuffer, BUFF_SIZE, MSG_CONFIRM, (const struct sockaddr *) &serverAddress, sizeof(serverAddress)));
     printf("Sent message to server\n");
 
-    errorMessage("Recieve", recvfrom(sockfp, recvBuffer, sizeof(time_t), MSG_WAITALL, (struct sockaddr *) &serverAddress, &len));
+    errorMessage("Recieve", recvfrom(clientSocket, recvBuffer, sizeof(time_t), MSG_WAITALL, (struct sockaddr *) &serverAddress, &len));
     printf("Server says date and time is: %s", ctime(recvBuffer));
 
     free(recvBuffer);

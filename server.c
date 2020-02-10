@@ -19,39 +19,39 @@ int errorMessage(char *errorType, int returnValue);
 
 int main()
 {
-    int sockfp = 0, len;
-    char buffer[BUFF_SIZE];
+    int server_socket = 0, cli_addr_size;
+    char readBuffer[BUFF_SIZE];
 
-    struct sockaddr_in servaddr, cliaddr;
+    struct sockaddr_in serv_addr, cli_addr;
 
 
-    sockfp = errorMessage("Create socket", socket(AF_INET, SOCK_DGRAM, 0));
+    server_socket = errorMessage("Create socket", socket(AF_INET, SOCK_DGRAM, 0));
     time_t *returnTime = malloc(sizeof(time_t));
 
-    memset(&servaddr, 0, sizeof(servaddr));
+    memset(&serv_addr, 0, sizeof(serv_addr));
 
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = INADDR_ANY;
-    servaddr.sin_port = htons(PORT);
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    serv_addr.sin_port = htons(PORT);
 
-    errorMessage("Bind", bind (sockfp, (const struct sockaddr *) &servaddr, sizeof(servaddr)));
+    errorMessage("Bind", bind (server_socket, (const struct sockaddr *) &serv_addr, sizeof(serv_addr)));
 
-    len = sizeof(cliaddr);
+    cli_addr_size = sizeof(cli_addr);
 
 
     while(1)
     {
         printf("Pending requests..\n");
-        memset(&cliaddr, 0, sizeof(cliaddr));
-        memset(&buffer, 0, BUFF_SIZE);
+        memset(&cli_addr, 0, sizeof(cli_addr));
+        memset(&readBuffer, 0, BUFF_SIZE);
 
-        errorMessage("Recieve", recvfrom(sockfp, (char *)buffer, BUFF_SIZE, MSG_WAITALL, (struct sockaddr *) &cliaddr, &len)); //Recieves request and stores senders address in cliaddr/len
+        errorMessage("Recieve", recvfrom(server_socket, (char *)readBuffer, BUFF_SIZE, MSG_WAITALL, (struct sockaddr *) &cli_addr, &cli_addr_size)); //Recieves request and stores senders address in cliaddr/len
         printf("Received request\n");
 
         *returnTime = getTime();
         printf("Current time is: %s\n", ctime(returnTime));
 
-        errorMessage("Sendback", sendto(sockfp, returnTime, sizeof(time_t), MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len));
+        errorMessage("Sendback", sendto(server_socket, returnTime, sizeof(time_t), MSG_CONFIRM, (const struct sockaddr *) &cli_addr, cli_addr_size));
         printf("Answer sent\n");
     }
 
