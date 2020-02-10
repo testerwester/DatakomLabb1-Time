@@ -11,6 +11,7 @@
 
 #define PORT 37
 #define BUFF_SIZE 1024
+#define TIME_DIFF_1900 2208988800
 
 
 time_t getTime();
@@ -25,7 +26,7 @@ int main()
     struct sockaddr_in serv_addr, cli_addr;
 
 
-    server_socket = errorMessage("Create socket", socket(AF_INET, SOCK_DGRAM, 0));
+    server_socket = errorMessage("Create socket", socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP));
     time_t *returnTime = malloc(sizeof(time_t));
 
     memset(&serv_addr, 0, sizeof(serv_addr));
@@ -49,7 +50,10 @@ int main()
         printf("Received request\n");
 
         *returnTime = getTime();
-        printf("Current time is: %s\n", ctime(returnTime));
+        //printf("Current time is: %s\n", ctime(returnTime));
+        printf("Time in bytes is: %li", *returnTime);
+        *returnTime += TIME_DIFF_1900; //Adds 70 years to correspond to RFR 868
+        *returnTime = htonl(*returnTime); //Sets byte order to network
 
         errorMessage("Sendback", sendto(server_socket, returnTime, sizeof(time_t), MSG_CONFIRM, (const struct sockaddr *) &cli_addr, cli_addr_size));
         printf("Answer sent\n");
@@ -57,13 +61,21 @@ int main()
 
 }
 
-
+/*
+    Returns current time in seconds from 1900-01-01 00:00
+*/
 time_t getTime()
 {
     time_t cTime;
     time(&cTime);
     return cTime;
 }
+
+/*
+ Från 1900
+ Skicka i little endian, network byte order
+
+*/
 
 int errorMessage(char *errorType, int returnValue)
 {

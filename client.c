@@ -12,6 +12,7 @@
 
 #define PORT 37
 #define BUFF_SIZE 16
+#define TIME_DIFF_1900 2208988800
 
 int errorMessage(char *errorType, int returnValue);
 
@@ -24,6 +25,7 @@ int main()
 
     struct sockaddr_in serverAddress;
     time_t *recvBuffer = malloc(sizeof(time_t));
+    time_t result = 0;
 
 
     clientSocket = errorMessage("Socket", socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)); //Creates UDP socket with DGRAM type
@@ -33,10 +35,12 @@ int main()
     serverAddress.sin_port = htons(PORT);
 
     errorMessage("Send", sendto(clientSocket, (const char*)emptyBuffer, BUFF_SIZE, MSG_CONFIRM, (const struct sockaddr *) &serverAddress, sizeof(serverAddress)));
-    printf("Sent message to server\n");
 
     errorMessage("Recieve", recvfrom(clientSocket, recvBuffer, sizeof(time_t), MSG_WAITALL, (struct sockaddr *) &serverAddress, &len));
-    printf("Server says date and time is: %s", ctime(recvBuffer));
+    result = ntohl(*recvBuffer); //Sets byte order from network
+    result -= TIME_DIFF_1900; //Removes 70 years to function with time()
+
+    printf("Server says date and time is: %s", ctime(&result));
 
     free(recvBuffer);
     exit(EXIT_SUCCESS);
